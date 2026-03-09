@@ -166,8 +166,9 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_USE_TLS = True
-EMAIL_PORT = 587
+# Changed to use SSL and Port 465 to bypass outbound Render block on 587
+EMAIL_USE_SSL = True
+EMAIL_PORT = 465
 EMAIL_HOST_USER = env("EMAIL_HOST_USER", default=env("EMAIL", default=""))
 EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default=env("EMAIL_PASSWORD", default="")).replace(" ", "")
 

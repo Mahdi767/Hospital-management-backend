@@ -11,6 +11,7 @@ from django.utils.encoding import force_bytes
 # Email
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
+import smtplib
 
 from django.contrib.auth.models import User
 from rest_framework import viewsets
@@ -37,7 +38,10 @@ class UserRegistrationApiview(APIView):
                 user = serializer.save()
                 token  = default_token_generator.make_token(user) # token generate korlam
                 uid = urlsafe_base64_encode(force_bytes(user.pk))
-                confirm_link = f"http://127.0.0.1:8000/patient-api/active/{uid}/{token}"
+                # Build the confirm link dynamically using the request
+                scheme = request.scheme # usually http or https
+                host = request.get_host() # domain name
+                confirm_link = f"{scheme}://{host}/patient-api/active/{uid}/{token}/"
                 email_subject = "Confirm your Email"
                 email_body = render_to_string('confirm_mail.html',{'confirm_link':confirm_link})
                 email = EmailMultiAlternatives(
@@ -47,7 +51,11 @@ class UserRegistrationApiview(APIView):
                     to=[user.email],
                 )
                 email.attach_alternative(email_body, "text/html")
-                email.send()
+                try:
+                    email.send()
+                except Exception as e:
+                    # In case of email sending error (e.g. SMTP config issue), we will handle it
+                    return Response({'error': f'Registration successful, but failed to send email: {str(e)}'}, status=500)
                 
 
 

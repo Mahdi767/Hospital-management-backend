@@ -55,7 +55,9 @@ class UserRegistrationApiview(APIView):
                     email.send()
                     return Response("Check your email")
                 except Exception as e:
-                    return Response({'error': f'Something went wrong: {str(e)}'}, status=500)
+                    import traceback
+                    traceback.print_exc() # Prints the actual error to your Render Logs
+                    return Response({'error': f'User was saved, but something went wrong sending the email. Error: {str(e)}'}, status=400)
             return Response(serializer.errors)
 
 def activate(request,uid64,token):

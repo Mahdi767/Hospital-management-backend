@@ -35,33 +35,28 @@ class UserRegistrationApiview(APIView):
       def post(self,request):
             serializer =  self.serializer_class(data=request.data)  
             if serializer.is_valid():
-                user = serializer.save()
-                token  = default_token_generator.make_token(user) # token generate korlam
-                uid = urlsafe_base64_encode(force_bytes(user.pk))
-                # Build the confirm link dynamically using the request
-                scheme = request.scheme # usually http or https
-                host = request.get_host() # domain name
-                confirm_link = f"{scheme}://{host}/patient-api/active/{uid}/{token}/"
-                email_subject = "Confirm your Email"
-                email_body = render_to_string('confirm_mail.html',{'confirm_link':confirm_link})
-                email = EmailMultiAlternatives(
-                    email_subject,
-                    '',
-                    from_email=settings.DEFAULT_FROM_EMAIL,
-                    to=[user.email],
-                )
-                email.attach_alternative(email_body, "text/html")
                 try:
+                    user = serializer.save()
+                    token  = default_token_generator.make_token(user) # token generate korlam
+                    uid = urlsafe_base64_encode(force_bytes(user.pk))
+                    # Build the confirm link dynamically using the request
+                    scheme = request.scheme # usually http or https
+                    host = request.get_host() # domain name
+                    confirm_link = f"{scheme}://{host}/patient-api/active/{uid}/{token}/"
+                    email_subject = "Confirm your Email"
+                    email_body = render_to_string('confirm_mail.html',{'confirm_link':confirm_link})
+                    email = EmailMultiAlternatives(
+                        email_subject,
+                        '',
+                        from_email=settings.DEFAULT_FROM_EMAIL,
+                        to=[user.email],
+                    )
+                    email.attach_alternative(email_body, "text/html")
                     email.send()
+                    return Response("Check your email")
                 except Exception as e:
-                    # In case of email sending error (e.g. SMTP config issue), we will handle it
-                    return Response({'error': f'Registration successful, but failed to send email: {str(e)}'}, status=500)
-                
-
-
-        
-                return Response("Check your email")
-            return Response(serializer._errors)
+                    return Response({'error': f'Something went wrong: {str(e)}'}, status=500)
+            return Response(serializer.errors)
 
 def activate(request,uid64,token):
     try:
